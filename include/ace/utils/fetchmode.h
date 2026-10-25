@@ -70,6 +70,15 @@ static inline UWORD fetchModeGetCopWaitX(const tVPort *pVPort) {
 	return MIN(uwWaitAfterFetch, uwLatestSafeWait);
 }
 
+static inline UWORD fetchModeGetCopBreakWaitX(const tVPort *pVPort) {
+#ifdef ACE_USE_AGA_FEATURES
+	if(fetchModeGetBitplaneFmode(pVPort)) {
+		return fetchModeGetDDfStop(pVPort) + 8;
+	}
+#endif
+	return fetchModeGetCopWaitX(pVPort);
+}
+
 static inline UWORD fetchModeGetScrollPrefetchBytes(const tVPort *pVPort) {
 	switch(fetchModeGetBitplaneFmode(pVPort)) {
 		case 1:

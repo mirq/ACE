@@ -337,7 +337,7 @@ void scrollBufferProcess(tScrollBufferManager *pManager) {
 			if(pBlock->ubDisabled) {
 				copBlockEnable(pCopList, pBlock);
 			}
-			copBlockWait(pCopList, pBlock, fetchModeGetCopWaitX(pManager->sCommon.pVPort), (
+			copBlockWait(pCopList, pBlock, fetchModeGetCopBreakWaitX(pManager->sCommon.pVPort), (
 				pManager->sCommon.pVPort->pView->ubPosY +
 				pManager->sCommon.pVPort->uwOffsY +
 				pManager->uwBmAvailHeight - uwScrollY - 1
