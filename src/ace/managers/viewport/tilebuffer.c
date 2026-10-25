@@ -443,12 +443,55 @@ static inline void tileBufferContinueTileDraw(
 	}
 }
 
+#if defined(ACE_SCROLLBUFFER_ENABLE_SCROLL_X) || defined(ACE_SCROLLBUFFER_ENABLE_SCROLL_Y)
+// A margin row/column is drawn a tile per frame from where the
+// camera was when it started. Once the camera has moved on (turned, or went
+// back), its remaining tiles can lie outside the area the buffer holds for
+// the camera now - drawn there, they land on visible tiles (the row wraps,
+// the column runs into the next plane). Clip what's left of each margin to
+// that area; tiles outside it are drawn when they scroll in again.
+static void tileBufferClipMargin(
+	tMarginState *pMargin, WORD wMinPos, WORD wMaxPos, WORD wMin, WORD wMax
+) {
+	if(pMargin->wTilePos < wMinPos || pMargin->wTilePos > wMaxPos) {
+		pMargin->wTileEnd = pMargin->wTileCurr;
+		return;
+	}
+	if(pMargin->wTileCurr < wMin) {
+		pMargin->wTileCurr = wMin;
+	}
+	if(pMargin->wTileEnd > wMax + 1) {
+		pMargin->wTileEnd = wMax + 1;
+	}
+	if(pMargin->wTileEnd < pMargin->wTileCurr) {
+		pMargin->wTileEnd = pMargin->wTileCurr;
+	}
+}
+
+static void tileBufferClipMargins(tTileBufferManager *pManager, tRedrawState *pState) {
+	UBYTE ubTileShift = pManager->ubTileShift;
+	WORD wMinX = (pManager->pCamera->uPos.uwX >> ubTileShift) - (ACE_SCROLLBUFFER_X_MARGIN_SIZE + SCROLLBUFFER_X_DRAW_MARGIN_SIZE);
+	WORD wMaxX = wMinX + (pManager->uwMarginedWidth >> ubTileShift) - 1;
+	WORD wMinY = (pManager->pCamera->uPos.uwY >> ubTileShift) - (ACE_SCROLLBUFFER_Y_MARGIN_SIZE + SCROLLBUFFER_Y_DRAW_MARGIN_SIZE);
+	WORD wMaxY = wMinY + (pManager->uwMarginedHeight >> ubTileShift) - 1;
+#if defined(ACE_SCROLLBUFFER_ENABLE_SCROLL_X)
+	tileBufferClipMargin(&pState->sMarginL, wMinX, wMaxX, wMinY, wMaxY);
+	tileBufferClipMargin(&pState->sMarginR, wMinX, wMaxX, wMinY, wMaxY);
+#endif
+#if defined(ACE_SCROLLBUFFER_ENABLE_SCROLL_Y)
+	tileBufferClipMargin(&pState->sMarginU, wMinY, wMaxY, wMinX, wMaxX);
+	tileBufferClipMargin(&pState->sMarginD, wMinY, wMaxY, wMinX, wMaxX);
+#endif
+}
+#endif
+
 FN_HOTSPOT
 void tileBufferProcess(tTileBufferManager *pManager) {
 #if defined(ACE_SCROLLBUFFER_ENABLE_SCROLL_X) || defined(ACE_SCROLLBUFFER_ENABLE_SCROLL_Y)
 	tRedrawState *pState = &pManager->pRedrawStates[pManager->ubStateIdx];
 	UBYTE ubTileSize = pManager->ubTileSize;
 	UBYTE ubTileShift = pManager->ubTileShift;
+	tileBufferClipMargins(pManager, pState);
 #endif
 
 #if defined(ACE_SCROLLBUFFER_ENABLE_SCROLL_X)
