@@ -11,11 +11,11 @@
 
 #define TILEBUFFER_MAX_TILESET_SIZE (1 << (8 * sizeof(tTileBufferTileIndex)))
 
-#if !defined(ACE_DEBUG)
-#define TILEBUFFER_REDRAW_HOG 1
-#else
+// The "hog" redraw skips blitWait() and relies on the CPU being
+// stalled by the blitter while it runs from chip RAM with caches off. An
+// accelerated 68030 isn't reliably stalled, starts the next tile blit early
+// and draws wrong tiles, so always wait.
 #define TILEBUFFER_REDRAW_HOG 0
-#endif
 
 // Zero the ACE_SCROLLBUFFER_X_MARGIN_SIZE/ACE_SCROLLBUFFER_Y_MARGIN_SIZE to see the undraw
 
